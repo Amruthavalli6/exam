@@ -1,0 +1,37 @@
+from heapq import heappush,heappop
+goal=(1,2,3,4,0,5,6,7,8)
+def misplaced(state):
+    return sum(1 for i in range(0,9) if state[i]!=0 and state[i]!=goal[i])
+def generate_successors(state):
+    successors=[]
+    zero_pos=state.index(0)
+    zero_r,zero_c=divmod(zero_pos,3)
+    for dr,dc in[(1,0),(0,1),(0,-1),(-1,0)]:
+        new_r,new_c=zero_r+dr,zero_c+dc
+        if 0<=new_r<3 and 0<=new_c<3:
+            new_pos=new_r*3+new_c
+            new_state=list(state)
+            new_state[zero_pos],new_state[new_pos]=new_state[new_pos],new_state[zero_pos]
+            successors.append(tuple(new_state))
+    return successors
+def a_star(initial):
+    openlist=[(misplaced(initial),0,initial,[])]
+    closed=set()
+    closed.add(initial)
+    while openlist:
+        f,g,curr,path=heappop(openlist)
+        if curr==goal:
+            return path+[curr]
+        for successor in generate_successors(curr):
+            if successor not in closed:
+                closed.add(successor)
+                h=misplaced(successor)
+                heappush(openlist,(g+h+1,g+1,successor,path+[successor]))
+    return None
+def print_puzzle(state):
+    for i in range(0,9,3):
+        print(" ".join(str(num) if num!=0 else " " for num in state[i:i+3]))
+    print("------")
+path_goal=a_star((1,2,3,4,5,8,6,0,7))
+for state in path_goal:
+    print_puzzle(state)
