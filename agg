@@ -1,0 +1,45 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import silhouette_score
+
+# STEP 1: Load dataset
+df = pd.read_csv("hi.csv")  # Replace with your file path
+target_col = 'NObeyesdad'  # Your target column (for reference only)
+
+# STEP 2: Prepare features (drop target, clustering is unsupervised)
+X = df.drop(columns=[target_col])
+
+# One-hot encode categorical features if any
+X = pd.get_dummies(X, drop_first=True)
+
+# STEP 3: Standardize features (important for distance-based clustering)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# STEP 4: Apply Agglomerative Clustering
+n_clusters = 3  # Set the number of clusters you want
+agglo = AgglomerativeClustering(n_clusters=n_clusters, metric='euclidean', linkage='ward')
+clusters = agglo.fit_predict(X_scaled)
+
+# STEP 5: Evaluate clustering with silhouette score
+sil_score = silhouette_score(X_scaled, clusters)
+print(f"Silhouette Score: {sil_score:.2f}")
+
+# STEP 6: Visualize clusters in 2D using PCA
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(10, 7))
+for cluster_label in np.unique(clusters):
+    plt.scatter(X_pca[clusters == cluster_label, 0], X_pca[clusters == cluster_label, 1], 
+                label=f'Cluster {cluster_label}', alpha=0.6)
+
+plt.title("Agglomerative Clustering Visualization with PCA")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.legend()
+plt.show()
