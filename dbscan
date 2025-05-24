@@ -1,0 +1,65 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.cluster import DBSCAN
+from sklearn.metrics import silhouette_score
+
+# STEP 1: Load dataset
+df = pd.read_csv("hi.csv")  # Replace with your file path
+target_col = 'NObeyesdad'  # Your target column (for reference only)
+
+# STEP 2: Prepare features (drop target, DBSCAN is unsupervised)
+X = df.drop(columns=[target_col])
+
+# One-hot encode categorical features if any
+X = pd.get_dummies(X, drop_first=True)
+
+# STEP 3: Standardize features (important for distance-based clustering)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# STEP 4: Apply DBSCAN
+# eps and min_samples parameters may need tuning based on your data
+dbscan = DBSCAN(eps=0.5, min_samples=5)
+dbscan.fit(X_scaled)
+
+# STEP 5: Extract cluster labels (-1 means noise)
+clusters = dbscan.labels_
+
+# STEP 6: Evaluate clustering with silhouette score (ignore noise points)
+# Silhouette score requires at least 2 clusters (excluding noise)
+n_clusters = len(set(clusters)) - (1 if -1 in clusters else 0)
+if n_clusters > 1:
+    sil_score = silhouette_score(X_scaled[clusters != -1], clusters[clusters != -1])
+    print(f"Silhouette Score (excluding noise): {sil_score:.2f}")
+else:
+    print("Silhouette Score not defined for less than 2 clusters.")
+
+# STEP 7: Visualize clusters in 2D using PCA
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+plt.figure(figsize=(10, 7))
+unique_labels = set(clusters)
+colors = [plt.cm.tab10(each) for each in np.linspace(0, 1, len(unique_labels))]
+
+for k, col in zip(unique_labels, colors):
+    if k == -1:
+        # Noise points plotted as black 'x'
+        col = [0, 0, 0, 1]
+        marker = 'x'
+        label = 'Noise'
+    else:
+        marker = 'o'
+        label = f'Cluster {k}'
+    class_member_mask = (clusters == k)
+    plt.scatter(X_pca[class_member_mask, 0], X_pca[class_member_mask, 1], 
+                c=[col], marker=marker, label=label, alpha=0.6)
+
+plt.title("DBSCAN Clustering Visualization with PCA")
+plt.xlabel("PCA Component 1")
+plt.ylabel("PCA Component 2")
+plt.legend()
+plt.show()
