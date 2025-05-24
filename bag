@@ -1,0 +1,75 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import BaggingClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix
+
+# Load dataset
+df = pd.read_csv("hi.csv")  # Replace with your file path
+
+# Identify the target column
+target_col = 'NObeyesdad'  # Change this to your actual target column name
+
+# Drop rows with missing target values
+df = df.dropna(subset=[target_col])
+
+# Separate features and target
+X = df.drop(columns=[target_col])
+y = df[target_col]
+
+# Encode the target if it's categorical
+if y.dtype == 'object' or y.dtype.name == 'category':
+    y = LabelEncoder().fit_transform(y)
+
+# One-hot encode categorical features
+X = pd.get_dummies(X, drop_first=True)
+
+# Impute missing feature values
+imputer = SimpleImputer(strategy='mean')
+X = imputer.fit_transform(X)
+
+# Feature selection (classification)
+selector = SelectKBest(score_func=f_classif, k='all')
+X = selector.fit_transform(X, y)
+
+# Standardize features
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+# Train-test split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Base Decision Tree estimator
+base_dt = DecisionTreeClassifier(random_state=42)
+
+# Bagging Classifier
+bagging = BaggingClassifier(estimator=base_dt, n_estimators=50, random_state=42)
+bagging.fit(X_train, y_train)
+
+# Prediction
+y_pred = bagging.predict(X_test)
+
+# Evaluation
+accuracy = accuracy_score(y_test, y_pred)
+precision = precision_score(y_test, y_pred, average='weighted')
+recall = recall_score(y_test, y_pred, average='weighted')
+
+print(f"Bagging Classifier:\nAccuracy: {accuracy:.2f}, Precision: {precision:.2f}, Recall: {recall:.2f}")
+
+# Confusion Matrix
+cm = confusion_matrix(y_test, y_pred)
+print("\nConfusion Matrix:\n", cm)
+
+# Plot confusion matrix heatmap
+plt.figure(figsize=(8, 6))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', cbar=False)
+plt.xlabel('Predicted')
+plt.ylabel('Actual')
+plt.title('Confusion Matrix - Bagging Classifier')
+plt.show()
