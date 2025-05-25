@@ -9,10 +9,10 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, confu
 from sklearn.feature_selection import SelectKBest, f_classif
 
 
-df = pd.read_csv("hi.csv")  # Replace with your file path
+df = pd.read_csv("hi.csv")  
 
 
-target_col = 'NObeyesdad'  # Change this to your actual target column name
+target_col = 'NObeyesdad'  
 X = df.drop(columns=[target_col])
 y = df[target_col]
 
