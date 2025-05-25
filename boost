@@ -8,56 +8,54 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, ConfusionMatrixDisplay
 
-# Load dataset
-df = pd.read_csv("hi.csv")  # Replace with your file path
 
-# Identify the target column
-target_col = 'NObeyesdad'  # Change this to your actual target column name
+df = pd.read_csv("hi.csv") 
 
-# Drop rows with missing target values
+
+target_col = 'NObeyesdad' 
+
+
 df = df.dropna(subset=[target_col])
 
-# Separate features and target
+
 X = df.drop(columns=[target_col])
 y = df[target_col]
 
-# Encode the target if it's categorical
+
 if y.dtype == 'object' or y.dtype.name == 'category':
     y = LabelEncoder().fit_transform(y)
 
-# One-hot encode categorical features
+
 X = pd.get_dummies(X, drop_first=True)
 
-# Impute missing feature values
+
 imputer = SimpleImputer(strategy='mean')
 X = imputer.fit_transform(X)
 
-# Feature selection (classification, so use f_classif)
-selector = SelectKBest(score_func=f_classif, k='all')  # Change k to select features
+
+selector = SelectKBest(score_func=f_classif, k='all') 
 X = selector.fit_transform(X, y)
 
-# Standardize features
+
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
-# Train-test split
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# AdaBoost Classifier (Boosting)
 ada = AdaBoostClassifier(n_estimators=50, random_state=42)
 ada.fit(X_train, y_train)
 
-# Prediction
+
 y_pred = ada.predict(X_test)
 
-# Evaluation
+
 accuracy_ada = accuracy_score(y_test, y_pred)
 precision_ada = precision_score(y_test, y_pred, average='weighted')
 recall_ada = recall_score(y_test, y_pred, average='weighted')
 
 print(f"AdaBoost Classifier:\nAccuracy: {accuracy_ada:.2f}, Precision: {precision_ada:.2f}, Recall: {recall_ada:.2f}")
 
-# Confusion Matrix plot
 cm = confusion_matrix(y_test, y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 disp.plot(cmap=plt.cm.Blues)
