@@ -8,56 +8,54 @@ from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score, confusion_matrix, ConfusionMatrixDisplay
 
-# Load dataset
-df = pd.read_csv("hi.csv")  # Replace with your file path
 
-# Identify the target column
-target_col = 'NObeyesdad'  # Change this to your actual target column name
+df = pd.read_csv("hi.csv")  
 
-# Drop rows with missing target values
+
+target_col = 'NObeyesdad' 
 df = df.dropna(subset=[target_col])
 
-# Separate features and target
+
 X = df.drop(columns=[target_col])
 y = df[target_col]
 
-# Encode the target if it's categorical
+
 if y.dtype == 'object' or y.dtype.name == 'category':
     y = LabelEncoder().fit_transform(y)
 
-# One-hot encode categorical features
+
 X = pd.get_dummies(X, drop_first=True)
 
-# Impute missing feature values
+
 imputer = SimpleImputer(strategy='mean')
 X = imputer.fit_transform(X)
 
-# Feature selection (classification)
-selector = SelectKBest(score_func=f_classif, k='all')  # Adjust k if needed
+
+selector = SelectKBest(score_func=f_classif, k='all') 
 X = selector.fit_transform(X, y)
 
-# Standardize features
+
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 
-# Train-test split
+
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Random Forest Classifier
+
 rf_clf = RandomForestClassifier(n_estimators=100, random_state=42)
 rf_clf.fit(X_train, y_train)
 
-# Prediction
+
 y_pred = rf_clf.predict(X_test)
 
-# Evaluation
+
 accuracy = accuracy_score(y_test, y_pred)
 precision = precision_score(y_test, y_pred, average='weighted')
 recall = recall_score(y_test, y_pred, average='weighted')
 
 print(f"Random Forest Classifier:\nAccuracy: {accuracy:.2f}, Precision: {precision:.2f}, Recall: {recall:.2f}")
 
-# Confusion Matrix plot
+
 cm = confusion_matrix(y_test, y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 disp.plot(cmap=plt.cm.Greens)
